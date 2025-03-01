@@ -15,6 +15,21 @@ dependencies = [
 [tool.poetry]
 packages = [{include = "anki_hanzi_gcloud_run", from = "src"}]
 
+[tool.poetry.scripts]
+lint = "poetry_scripts:lint"
+format = "poetry_scripts:format"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.15.0"
+black = "^25.1.0"
+isort = "^6.0.1"
+flake8 = "^7.1.2"
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+strict = true
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
