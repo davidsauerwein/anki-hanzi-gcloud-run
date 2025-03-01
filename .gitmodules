@@ -1,0 +1,3 @@
+[submodule "anki-hanzi"]
+	path = anki-hanzi
+	url = https://github.com/davidsauerwein/anki-hanzi.git
