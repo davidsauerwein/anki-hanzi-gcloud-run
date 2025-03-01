@@ -6,8 +6,10 @@ authors = [
     {name = "David Sauerwein",email = "david@sauerwein.xyz"}
 ]
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12,<4"
 dependencies = [
+    "functions-framework (>=3.8.2,<4.0.0)",
+    "flask-httpauth (>=4.8.0,<5.0.0)"
 ]
 
 [tool.poetry]
