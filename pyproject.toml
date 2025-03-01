@@ -18,6 +18,7 @@ packages = [{include = "anki_hanzi_gcloud_run", from = "src"}]
 [tool.poetry.scripts]
 lint = "poetry_scripts:lint"
 format = "poetry_scripts:format"
+deploy = "poetry_scripts:deploy"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.15.0"
