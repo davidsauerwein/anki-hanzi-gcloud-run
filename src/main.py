@@ -1,9 +1,16 @@
+import logging
+import shutil
 from functools import cache
 from pathlib import Path
 from typing import Any
 
 import anki_hanzi
 import functions_framework
+
+# google-cloud-storage apparently does not have full typing support.
+# This fixes mypy errors while still allow to type check other google cloud modules.
+# https://github.com/googleapis/python-cloud-core/issues/166
+import google.cloud.storage as storage  # type: ignore
 import requests
 from flask import Request
 from flask_httpauth import HTTPBasicAuth  # type: ignore
@@ -51,14 +58,39 @@ def run_anki_hanzi(request: Request) -> dict[str, Any]:
 
     anki_data_dir = Path("/tmp/anki-hanzi")
     anki_data_dir.mkdir(parents=True, exist_ok=True)
+    collection_file = anki_data_dir / "collection.anki2"
+
+    storage_client = storage.Client()
+    anki_data_bucket = storage_client.bucket(f"{get_project_id()}-anki-data")
+    cache_archive = anki_data_dir.with_suffix(".tar")
+    cache_blob = anki_data_bucket.blob(cache_archive.name)
+
+    # Download the collection if we already cached it.
+    if cache_blob.exists():
+        logging.info("Downloading cached collection.")
+        cache_blob.download_to_filename(str(cache_archive))
+        shutil.unpack_archive(filename=cache_archive, extract_dir=anki_data_dir)
+        if not collection_file.is_file():
+            logging.warning("Cached archive does not contain collection.")
+        logging.info("Successfully downloaded cached collection.")
+    else:
+        logging.info("Collection not cached. Performing full sync.")
 
     result = anki_hanzi.run(
         anki_username=anki_username,
         anki_password=anki_password,
-        anki_collection_path=anki_data_dir / "collection.anki2",
+        anki_collection_path=collection_file,
         google_cloud_project_id=get_project_id(),
         deck_name=deck,
         force=False,
         overwrite_target_fields=False,
     )
+
+    logging.info("Uploading collection to cache.")
+    shutil.make_archive(
+        base_name=str(anki_data_dir), format="tar", root_dir=anki_data_dir
+    )
+    cache_blob.upload_from_filename(str(cache_archive))
+    logging.info("Successfully uploaded collection.")
+
     return dict(result)
