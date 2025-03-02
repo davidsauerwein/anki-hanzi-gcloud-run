@@ -105,4 +105,8 @@ def deploy() -> None:
             "--base-image",
             "python312",
             "--allow-unauthenticated",
+            "--max-instances",
+            "1",
+            "--concurrency",
+            "1",
         )
