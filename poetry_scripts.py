@@ -99,7 +99,7 @@ def deploy() -> None:
             f"--project={project_id}",
             f"--service-account=anki-hanzi-run-function@{project_id}.iam.gserviceaccount.com",
             f"--source={code_archive}",
-            "--function=hello_get",
+            "--function=run_anki_hanzi",
             "--base-image=python312",
             "--allow-unauthenticated",
             "--max-instances=1",

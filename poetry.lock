@@ -46,7 +46,7 @@ tenacity = "^9.0.0"
 type = "git"
 url = "https://github.com/davidsauerwein/anki-hanzi.git"
 reference = "HEAD"
-resolved_reference = "2d86264189459596cd86bf808e7c55fc9a9026a0"
+resolved_reference = "8e0ccb09053d7b9e9a530bfc5f9ba8a28253eed2"
 
 [[package]]
 name = "beautifulsoup4"
