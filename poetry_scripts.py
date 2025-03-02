@@ -56,28 +56,26 @@ def format() -> None:
     print("Formatted code successfully!")
 
 
-def export_requirements(path: Path) -> bytes:
-    return subprocess.run(
-        ["poetry", "export", "--format", "requirements.txt"],
-        cwd=path,
-        check=True,
-        capture_output=True,
-    ).stdout
-
-
 def deploy() -> None:
     with TemporaryDirectory() as tmpdir_str:
         tmpdir = Path(tmpdir_str)
 
-        ignore_patterns = shutil.ignore_patterns("*.pyc", "__pycache__")
         shutil.copytree(
-            "anki-hanzi/anki_hanzi", tmpdir / "anki_hanzi", ignore=ignore_patterns
+            "src",
+            tmpdir,
+            ignore=shutil.ignore_patterns("*.pyc", "__pycache__"),
+            dirs_exist_ok=True,
         )
-        shutil.copytree("src", tmpdir, ignore=ignore_patterns, dirs_exist_ok=True)
 
-        with open(tmpdir / "requirements.txt", "wb") as requirements:
-            requirements.write(export_requirements(Path.cwd()))
-            requirements.write(export_requirements(Path("anki-hanzi")))
+        run(
+            "poetry",
+            "export",
+            "--without-hashes",
+            "--format",
+            "requirements.txt",
+            "--output",
+            str(tmpdir / "requirements.txt"),
+        )
 
         code_archive = Path(
             shutil.make_archive(
