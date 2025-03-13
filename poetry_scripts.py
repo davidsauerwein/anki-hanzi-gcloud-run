@@ -104,4 +104,5 @@ def deploy() -> None:
             "--allow-unauthenticated",
             "--max-instances=1",
             "--concurrency=1",
+            "--memory=1Gi",  # default of 512 Mi turned out to not be sufficient for anki
         )
