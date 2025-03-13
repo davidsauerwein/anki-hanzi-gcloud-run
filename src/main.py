@@ -2,7 +2,6 @@ import logging
 import shutil
 from functools import cache
 from pathlib import Path
-from typing import Any
 
 import anki_hanzi
 import functions_framework
@@ -12,7 +11,7 @@ import functions_framework
 # https://github.com/googleapis/python-cloud-core/issues/166
 import google.cloud.storage as storage  # type: ignore
 import requests
-from flask import Request
+from flask import Request, Response, jsonify
 from flask_httpauth import HTTPBasicAuth  # type: ignore
 from google.cloud import secretmanager
 
@@ -46,12 +45,19 @@ def verify_password(username: str, password: str) -> bool:
 
 @functions_framework.http
 @auth.login_required  # type: ignore
-def run_anki_hanzi(request: Request) -> dict[str, Any]:
-    # We assume a path of process/<deckname>
-    # FIXME Do proper error handle and figure out how to switch to full flask
+def run_anki_hanzi(request: Request) -> tuple[Response, int]:
     path = request.path.removeprefix("/")
-    process, deck = path.split("/")
-    assert process == "process"
+    components = path.split("/")
+
+    # Path must be /process/<deck>. A bit hacky honestly, but with the functions framework there is no control over the
+    # Flask app to set any routes. This could be fixed by switching to Google Cloud Run, but I don't think that's worth
+    # the effort right now.
+    # Guarding against a specific path avoids loading the collection when browsers request random files such as a
+    # favicon.
+    if len(components) != 2 or components[0] != "process":
+        return jsonify(error="Not found"), 404
+
+    deck = components[1]
 
     anki_username = get_secret("anki-username")
     anki_password = get_secret("anki-password")
@@ -76,15 +82,18 @@ def run_anki_hanzi(request: Request) -> dict[str, Any]:
     else:
         logging.info("Collection not cached. Performing full sync.")
 
-    result = anki_hanzi.run(
-        anki_username=anki_username,
-        anki_password=anki_password,
-        anki_collection_path=collection_file,
-        google_cloud_project_id=get_project_id(),
-        deck_name=deck,
-        force=False,
-        overwrite_target_fields=False,
-    )
+    try:
+        result = anki_hanzi.run(
+            anki_username=anki_username,
+            anki_password=anki_password,
+            anki_collection_path=collection_file,
+            google_cloud_project_id=get_project_id(),
+            deck_name=deck,
+            force=False,
+            overwrite_target_fields=False,
+        )
+    except anki_hanzi.AnkiDeckNotFoundException:
+        return jsonify(error=f"Anki deck {deck} does not exist."), 404
 
     logging.info("Uploading collection to cache.")
     shutil.make_archive(
@@ -93,4 +102,4 @@ def run_anki_hanzi(request: Request) -> dict[str, Any]:
     cache_blob.upload_from_filename(str(cache_archive))
     logging.info("Successfully uploaded collection.")
 
-    return dict(result)
+    return jsonify(result), 200
