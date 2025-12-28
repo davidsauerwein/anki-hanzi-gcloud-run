@@ -47,7 +47,7 @@ tenacity = "^9.0.0"
 type = "git"
 url = "https://github.com/davidsauerwein/anki-hanzi.git"
 reference = "HEAD"
-resolved_reference = "7766a5b08fe494db34db49574c765fe0138199c5"
+resolved_reference = "5db00a9129dd312c7dc05de3528ea8025d44afac"
 
 [[package]]
 name = "anyio"
